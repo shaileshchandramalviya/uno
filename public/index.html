@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNO Multiplayer – WiFi Game</title>
+  <meta name="description" content="Play UNO with friends on the same WiFi network. Real-time multiplayer UNO card game." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── LOBBY ─────────────────────────────────────────────────────────── -->
+  <div id="screen-lobby" class="screen active">
+    <div class="lobby-bg">
+      <div class="orb orb1"></div>
+      <div class="orb orb2"></div>
+      <div class="orb orb3"></div>
+    </div>
+    <div class="lobby-card glass">
+      <div class="uno-logo">
+        <span class="uno-u">U</span><span class="uno-n">N</span><span class="uno-o">O</span>
+      </div>
+      <p class="lobby-subtitle">WiFi Multiplayer</p>
+
+      <div class="form-group">
+        <label for="player-name">Your Name</label>
+        <input id="player-name" type="text" maxlength="18" placeholder="Enter your name…" autocomplete="off" />
+      </div>
+      <button id="btn-join" class="btn btn-primary">Join Game</button>
+
+      <div id="lobby-error" class="error-msg hidden"></div>
+
+      <!-- Waiting Area -->
+      <div id="waiting-area" class="hidden">
+        <div class="divider"></div>
+        <p class="waiting-label">Players in lobby</p>
+        <ul id="player-list-lobby"></ul>
+        <button id="btn-start" class="btn btn-success hidden">🚀 Start Game</button>
+        <p id="waiting-hint" class="hint-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GAME ──────────────────────────────────────────────────────────── -->
+  <div id="screen-game" class="screen hidden">
+
+    <!-- Sidebar: opponents -->
+    <aside id="sidebar">
+      <div class="sidebar-logo">UNO</div>
+      <h3 class="sidebar-title">Players</h3>
+      <ul id="player-list-game"></ul>
+
+      <div class="sidebar-deck-info">
+        <div class="deck-stat">
+          <span class="deck-label">Deck</span>
+          <span id="deck-count" class="deck-num">—</span>
+        </div>
+        <div class="deck-stat">
+          <span class="deck-label">Direction</span>
+          <span id="direction-label" class="deck-num">→</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main area -->
+    <main id="game-main">
+
+      <!-- Action log -->
+      <div id="action-log">
+        <div id="action-log-inner"></div>
+      </div>
+
+      <!-- Discard pile + pending draw banner -->
+      <div id="table-area">
+        <div id="pending-draw-banner" class="hidden">
+          <span id="pending-draw-text"></span>
+        </div>
+        <div id="top-card-wrap">
+          <div class="deck-pile" id="draw-pile-visual">
+            <div class="deck-back-card"></div>
+            <div class="deck-back-card"></div>
+            <div class="deck-back-card last"></div>
+          </div>
+          <div id="top-card" class="card-display">?</div>
+        </div>
+      </div>
+
+      <!-- Turn indicator -->
+      <div id="turn-indicator"></div>
+
+      <!-- Action buttons -->
+      <div id="action-buttons">
+        <button id="btn-draw" class="btn btn-draw hidden">Draw Card</button>
+        <button id="btn-pass" class="btn btn-pass hidden">Pass Turn</button>
+      </div>
+
+      <!-- Player hand -->
+      <div id="hand-area">
+        <p class="hand-label">Your Hand <span id="hand-count-badge"></span></p>
+        <div id="hand-cards"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ── COLOR PICKER MODAL ─────────────────────────────────────────────── -->
+  <div id="color-modal" class="modal-overlay hidden">
+    <div class="modal-box glass">
+      <h2>Choose a Color</h2>
+      <div class="color-choices">
+        <button class="color-btn" data-color="red"    style="background:#e74c3c">🔴 Red</button>
+        <button class="color-btn" data-color="yellow" style="background:#f1c40f;color:#222">🟡 Yellow</button>
+        <button class="color-btn" data-color="green"  style="background:#2ecc71">🟢 Green</button>
+        <button class="color-btn" data-color="blue"   style="background:#3498db">🔵 Blue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GAME OVER MODAL ────────────────────────────────────────────────── -->
+  <div id="gameover-modal" class="modal-overlay hidden">
+    <div class="modal-box glass gameover-box">
+      <div class="trophy">🏆</div>
+      <h2 id="gameover-title">Game Over</h2>
+      <p id="gameover-msg"></p>
+      <button id="btn-reload" class="btn btn-primary" onclick="location.reload()">Play Again</button>
+    </div>
+  </div>
+
+  <!-- ── DRAWN CARD MODAL ───────────────────────────────────────────────── -->
+  <div id="drawn-modal" class="modal-overlay hidden">
+    <div class="modal-box glass">
+      <h2>You Drew a Card</h2>
+      <div id="drawn-card-display" class="card-display-lg"></div>
+      <p id="drawn-card-msg" class="hint-text"></p>
+      <div id="drawn-card-actions">
+        <button id="btn-play-drawn" class="btn btn-primary hidden">Play This Card</button>
+        <button id="btn-skip-drawn" class="btn btn-pass">Keep &amp; Pass Turn</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
