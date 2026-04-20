@@ -18,6 +18,7 @@ let topCard = null;
 const screenLobby   = document.getElementById('screen-lobby');
 const screenGame    = document.getElementById('screen-game');
 const inputName     = document.getElementById('player-name');
+const inputRoom     = document.getElementById('room-code');
 const btnJoin       = document.getElementById('btn-join');
 const btnStart      = document.getElementById('btn-start');
 const lobbyError    = document.getElementById('lobby-error');
@@ -124,10 +125,13 @@ inputName.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame()
 
 function joinGame() {
   const name = inputName.value.trim();
+  const room = inputRoom.value.trim();
   if (!name) { showError('Please enter your name.'); return; }
-  socket.emit('join_game', { name });
+  if (!room) { showError('Please enter a room code.'); return; }
+  socket.emit('join_game', { name, room });
   btnJoin.disabled = true;
   inputName.disabled = true;
+  inputRoom.disabled = true;
 }
 
 btnStart.addEventListener('click', () => {
@@ -135,26 +139,26 @@ btnStart.addEventListener('click', () => {
 });
 
 // ── Socket: Lobby ─────────────────────────────────────
-socket.on('joined', ({ playerId, isLeader: leader }) => {
+socket.on('joined', ({ playerId, isLeader: leader, roomId }) => {
   myId = playerId;
   isLeader = leader;
   waitingArea.classList.remove('hidden');
   if (isLeader) {
     btnStart.classList.remove('hidden');
-    waitingHint.textContent = 'You are the leader. Press Start when everyone has joined.';
+    waitingHint.innerHTML = `You are the host of room <b style="color:var(--accent)">${roomId}</b>. Press Start when everyone has joined.`;
   } else {
-    waitingHint.textContent = 'Waiting for the leader to start the game…';
+    waitingHint.innerHTML = `Waiting for the host to start room <b style="color:var(--accent)">${roomId}</b>…`;
   }
 });
 
-socket.on('lobby_update', ({ players, leaderId }) => {
+socket.on('lobby_update', ({ players, leaderId, roomId }) => {
   isLeader = (myId === leaderId);
   if (isLeader) {
     btnStart.classList.remove('hidden');
-    waitingHint.textContent = 'You are the leader. Press Start when everyone has joined.';
+    waitingHint.innerHTML = `You are the host of room <b style="color:var(--accent)">${roomId}</b>. Press Start when everyone has joined.`;
   } else {
     btnStart.classList.add('hidden');
-    waitingHint.textContent = 'Waiting for the leader to start the game…';
+    waitingHint.innerHTML = `Waiting for the host to start room <b style="color:var(--accent)">${roomId}</b>…`;
   }
 
   playerListLobby.innerHTML = '';
@@ -171,6 +175,7 @@ socket.on('error_msg', (msg) => {
     showError(msg);
     btnJoin.disabled = false;
     inputName.disabled = false;
+    inputRoom.disabled = false;
   } else {
     addLog('⚠ ' + msg);
   }

@@ -137,6 +137,7 @@ function broadcastLobby(roomId) {
   io.to(roomId).emit('lobby_update', {
     players: playerList,
     leaderId: room.leaderId,
+    roomId: roomId,
   });
 }
 
@@ -145,15 +146,16 @@ io.on('connection', (socket) => {
   console.log('Connected:', socket.id);
 
   // Player joins lobby
-  socket.on('join_game', ({ name }) => {
-    const room = getOrCreateRoom(DEFAULT_ROOM);
-    if (room.gameStarted) {
+  socket.on('join_game', ({ name, room }) => {
+    const roomId = room ? room.toLowerCase() : DEFAULT_ROOM;
+    const currentRoom = getOrCreateRoom(roomId);
+    if (currentRoom.gameStarted) {
       socket.emit('error_msg', 'Game already in progress.');
       return;
     }
 
     // Check duplicate name
-    const exists = room.players.find(
+    const exists = currentRoom.players.find(
       (p) => p.name.toLowerCase() === name.toLowerCase()
     );
     if (exists) {
@@ -161,23 +163,24 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (room.players.length === 0) {
-      room.leaderId = socket.id;
+    if (currentRoom.players.length === 0) {
+      currentRoom.leaderId = socket.id;
     }
 
-    room.players.push({ id: socket.id, name, hand: [] });
-    socket.join(DEFAULT_ROOM);
-    socket.data.roomId = DEFAULT_ROOM;
+    currentRoom.players.push({ id: socket.id, name, hand: [] });
+    socket.join(roomId);
+    socket.data.roomId = roomId;
     socket.data.playerName = name;
 
-    broadcastLobby(DEFAULT_ROOM);
-    socket.emit('joined', { playerId: socket.id, isLeader: socket.id === room.leaderId });
-    console.log(`${name} joined`);
+    broadcastLobby(roomId);
+    socket.emit('joined', { playerId: socket.id, isLeader: socket.id === currentRoom.leaderId, roomId });
+    console.log(`${name} joined room ${roomId}`);
   });
 
   // Leader starts game
   socket.on('start_game', () => {
-    const room = getOrCreateRoom(DEFAULT_ROOM);
+    const roomId = socket.data.roomId;
+    const room = getOrCreateRoom(roomId);
     if (socket.id !== room.leaderId) {
       socket.emit('error_msg', 'Only the leader can start the game.');
       return;
@@ -212,9 +215,9 @@ io.on('connection', (socket) => {
     room.pendingDraw = 0;
     room.gameStarted = true;
 
-    io.to(DEFAULT_ROOM).emit('game_started');
-    broadcastGameState(DEFAULT_ROOM);
-    console.log('Game started!');
+    io.to(roomId).emit('game_started');
+    broadcastGameState(roomId);
+    console.log(`Game started in room ${roomId}!`);
   });
 
   // Player plays a card
